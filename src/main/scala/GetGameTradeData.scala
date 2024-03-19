@@ -3,7 +3,7 @@ import com.microsoft.playwright.Playwright
 import models.GameTradeDT
 import io.circe.parser.decode
 
-object GetData {
+object GetGameTradeData {
   def getGameTradeData(playwright: Playwright, url: String): IO[Array[GameTradeDT]] = for {
     browser <- IO(playwright.chromium().launch())
     page <- IO(browser.newPage())
