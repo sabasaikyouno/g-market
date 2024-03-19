@@ -6,5 +6,6 @@ case class GameClubDT(
   gameTitle: String,
   detail: String,
   price: Int,
-  url: String
+  url: String,
+  category: String
 )
