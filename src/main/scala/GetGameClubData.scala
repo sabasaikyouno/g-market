@@ -18,7 +18,8 @@ object GetGameClubData {
           detail <- IO(ele.locator(".detail").innerHTML())
           price <- IO(parsePrice(ele.locator(".price").innerHTML()))
           url <- IO(ele.locator(".title h3 a").getAttribute("href"))
-        } yield GameClubDT(title,imgSrc, gameTitle, detail, price, url)
+          category <- IO(ele.locator("//div[@class='item-row-top']/span[2]").innerHTML())
+        } yield GameClubDT(title,imgSrc, gameTitle, detail, price, url, category)
       }
     }
   }
