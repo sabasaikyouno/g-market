@@ -7,9 +7,9 @@ import scala.jdk.CollectionConverters._
 
 object GetGameClubData {
   def getGameClubData(playwright: Playwright, url: String) = {
-    val itemsEle = getItemsEle(playwright, url)
+    val itemEleList = getItemEleList(playwright, url)
 
-    itemsEle.flatMap { list =>
+    itemEleList.flatMap { list =>
       list.traverse { ele =>
         for {
           title <- IO(ele.locator(".title h3 a").innerHTML())
@@ -24,7 +24,7 @@ object GetGameClubData {
     }
   }
 
-  private def getItemsEle(playwright: Playwright, url: String) = for {
+  private def getItemEleList(playwright: Playwright, url: String) = for {
     browser <- IO(playwright.chromium().launch())
     page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
     _ <- IO(page.navigate(url))
