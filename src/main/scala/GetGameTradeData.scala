@@ -21,7 +21,8 @@ object GetGameTradeData {
           detail <- IO(ele.locator(".detail .description p").innerHTML())
           price <- IO(parsePrice(ele.locator(".detail .price .current_price p").innerHTML()))
           url <- IO("https://gametrade.jp" + ele.locator(".exhibit-link").getAttribute("href"))
-        } yield GameTradeDT(title,imgSrc, gameTitle, detail, price, url)
+          category <- IO(parseCategory(ele.page().url()))
+        } yield GameTradeDT(title,imgSrc, gameTitle, detail, price, url, category)
       }
     }
   }
@@ -47,4 +48,6 @@ object GetGameTradeData {
   }
 
   private def parsePrice(price: String) = price.replace("¥", "").replace(",", "").toInt
+
+  private def parseCategory(url: String) = url.split('/').last
 }
