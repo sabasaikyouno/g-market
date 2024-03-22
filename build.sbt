@@ -11,6 +11,8 @@ libraryDependencies += "org.typelevel" %% "cats-core" % "2.10.0"
 libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.4"
 libraryDependencies += "org.jsoup" % "jsoup" % "1.17.2"
 libraryDependencies += "com.microsoft.playwright" % "playwright" % "1.42.0"
+libraryDependencies += "commons-lang" % "commons-lang" % "2.6"
+
 
 val circeVersion = "0.14.1"
 
