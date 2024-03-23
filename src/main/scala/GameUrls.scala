@@ -44,6 +44,18 @@ object GameUrls {
     }
   } yield gameUrls
 
+  private def getRmtClubUrls(playwright: Playwright) = for {
+    browser <- IO(playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false)))
+    page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
+    _ <- IO(page.navigate("https://rmt.club/"))
+    _ <- IO(page.click("#search_box"))
+    _ <- IO.sleep(5.seconds)
+    eleList <- IO(page.locator(".syllabary-list p span").all().asScala.toList)
+    gameUrls = eleList.map { ele =>
+      GameUrl(s"https://rmt.club/post_list?title=${ele.getAttribute("data-id")}", ele.innerHTML())
+    }
+  } yield gameUrls
+
   private def parseGameClubJson(jsonStr: String) = {
     val cursor = parse(jsonStr).getOrElse(Json.Null).hcursor
     (
@@ -51,7 +63,6 @@ object GameUrls {
       cursor.downField("name").as[String].getOrElse("")
     )
   }
-
 
   private def similarity(s1: String, s2: String) = {
     val maxLength = s1.length.max(s2.length)
