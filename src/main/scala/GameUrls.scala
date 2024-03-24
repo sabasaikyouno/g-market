@@ -1,20 +1,27 @@
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, BrowserType, Playwright}
+import com.microsoft.playwright.{Browser, BrowserType, Locator, Playwright}
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.lang.StringUtils
 
-import io.circe._
-import io.circe.parser._
-
 import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
+
+import scala.collection.parallel.CollectionConverters._
 
 case class GameUrl(url: String, gameTitle: String)
 
 object GameUrls {
 
-  def getPcGameUrls(playwright: Playwright) = ???
+  def getPcGameUrls(playwright: Playwright) = for {
+    gameTradeUrls <- getGameTradeUrls(playwright)
+    gameClubUrls <- getGameClubUrls(playwright)
+    rmtClubUrls <- getRmtClubUrls(playwright)
+    gameUrls = gameTradeUrls.map { gameTradeUrl =>
+      val gameTitle = gameTradeUrl.gameTitle
+      gameTitle -> List(gameTradeUrl.url, findSimilar(gameTitle, gameClubUrls), findSimilar(gameTitle, rmtClubUrls))
+    }
+  } yield gameUrls
 
   private def getGameTradeUrls(playwright: Playwright) = for {
     browser <- IO(playwright.chromium().launch())
@@ -40,12 +47,12 @@ object GameUrls {
     eleList <- IO(page.locator(".syllabary-list div").all().asScala.toList)
     gameUrls = eleList.map { ele =>
       val json = parseGameClubJson(ele.getAttribute("data-item"))
-      GameUrl(s"https://gameclub.jp${json._1}", json._2)
+      GameUrl(s"https://gameclub.jp/${json._1}", json._2)
     }
   } yield gameUrls
 
   private def getRmtClubUrls(playwright: Playwright) = for {
-    browser <- IO(playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false)))
+    browser <- IO(playwright.chromium().launch())
     page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
     _ <- IO(page.navigate("https://rmt.club/"))
     _ <- IO(page.click("#search_box"))
@@ -62,6 +69,10 @@ object GameUrls {
       cursor.downField("slug").as[String].getOrElse(""),
       cursor.downField("name").as[String].getOrElse("")
     )
+  }
+
+  private def findSimilar(gameTitle: String, gameUrls: List[GameUrl]) = {
+    gameUrls.map(gameUrl => (similarity(gameTitle, gameUrl.gameTitle), gameUrl.url)).maxBy(_._1)._2
   }
 
   private def similarity(s1: String, s2: String) = {
