@@ -8,9 +8,8 @@ import scala.jdk.CollectionConverters._
 object GetGameClubData {
   def getGameClubData(playwright: Playwright, url: String) = {
     val itemEleList = getItemEleList(playwright, url)
-
     itemEleList.flatMap { list =>
-      list.traverse { ele =>
+      list.filter(_.locator(".game-title").isVisible()).traverse { ele =>
         for {
           title <- IO(ele.locator(".title h3 a").innerHTML())
           imgSrc <- IO(ele.locator(".item-thumb").getAttribute("src"))
