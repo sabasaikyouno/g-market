@@ -40,9 +40,10 @@ object GMarketConversion {
 
     def toGMarketCategory: String => String = {
       case "引退垢" => "アカウント"
+      case "リセマラ・初期垢" => "アカウント"
       case "アイテム・通貨" => "アイテム"
       case "代行" => "代行"
-      case "注目アカウント" => "その他"
+      case _ => "その他"
     }
   }
 
@@ -59,8 +60,10 @@ object GMarketConversion {
     )
     def toGMarketCategory: String => String = {
       case "exhibits" => "アカウント"
+      case "golds" => "アイテム"
       case "items" => "アイテム"
       case "agencies" => "代行"
+      case _ => "その他"
     }
 
   }
