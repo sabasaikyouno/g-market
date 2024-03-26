@@ -2,19 +2,19 @@ import cats._
 import cats.data._
 import cats.syntax.all._
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, Playwright}
+import com.microsoft.playwright.{Browser, Page, Playwright}
 import models.RmtClubDT
 
 import scala.jdk.CollectionConverters._
 
 object GetRmtClubData {
-  def getRmtClubData(playwright: Playwright, url: String) = {
+  def getRmtClubData(url: String, page: Page) = {
     val itemELeList = for {
-      itemEleList <- getCategoryUrls(url).traverse(url => getItemEleList(playwright, url))
+      itemEleList <- getCategoryUrls(url).traverse(url => getItemEleList(url, page))
     } yield itemEleList.flatten
 
     itemELeList.flatMap { list =>
-      list.traverse { ele =>
+      list.filter(_.isVisible).traverse { ele =>
         for {
           title <- IO(ele.locator(".item-texts .title a").innerHTML())
           imgSrc <- IO(ele.locator(".item-thumb img").getAttribute("src"))
@@ -28,12 +28,10 @@ object GetRmtClubData {
     }
   }
 
-  private def getItemEleList(playwright: Playwright, url: String) = for {
-    browser <- IO(playwright.chromium().launch())
-    page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
+  private def getItemEleList(url: String, page: Page) = for {
     _ <- IO(page.navigate(url))
-    itemsEle <- IO(page.locator(".post-list-row .item").all().asScala.toList)
-  } yield itemsEle
+    itemEle <- IO(page.locator(".post-list-row .item").all().asScala.toList)
+  } yield itemEle
 
   private def getCategoryUrls(url: String) = {
     val dealAccountId = List(1,2,4)
