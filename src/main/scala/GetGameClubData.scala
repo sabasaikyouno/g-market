@@ -1,13 +1,15 @@
-import cats._, cats.data._, cats.syntax.all._
+import cats._
+import cats.data._
+import cats.syntax.all._
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, BrowserType, Playwright}
+import com.microsoft.playwright.{Browser, BrowserType, Page, Playwright}
 import models.GameClubDT
 
 import scala.jdk.CollectionConverters._
 
 object GetGameClubData {
-  def getGameClubData(playwright: Playwright, url: String) = {
-    val itemEleList = getItemEleList(playwright, url)
+  def getGameClubData(url: String, page: Page) = {
+    val itemEleList = getItemEleList(url, page)
     itemEleList.flatMap { list =>
       list.filter(_.locator(".game-title").isVisible()).traverse { ele =>
         for {
@@ -23,9 +25,7 @@ object GetGameClubData {
     }
   }
 
-  private def getItemEleList(playwright: Playwright, url: String) = for {
-    browser <- IO(playwright.chromium().launch())
-    page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
+  private def getItemEleList(url: String, page: Page) = for {
     _ <- IO(page.navigate(url))
     itemsEle <- IO(page.locator(".item-list .item-row").all().asScala.toList)
   } yield itemsEle
