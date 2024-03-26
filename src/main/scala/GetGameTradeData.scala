@@ -17,7 +17,6 @@ object GetGameTradeData {
 
     itemEleList.flatMap { list =>
       list.filter(_.isVisible).traverse { ele =>
-        println(ele.isVisible, ele.locator(".detail h3").isVisible)
         for {
           title <- IO(ele.locator(".detail h3").innerHTML())
           imgSrc <- IO(ele.locator(".game-image img").getAttribute("src"))
