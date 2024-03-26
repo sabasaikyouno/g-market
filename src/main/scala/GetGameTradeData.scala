@@ -1,19 +1,22 @@
-import cats._, cats.data._, cats.syntax.all._
+import cats._
+import cats.data._
+import cats.syntax.all._
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, Playwright}
+import com.microsoft.playwright.{Browser, Page, Playwright}
 import models.GameTradeDT
 import io.circe.parser.decode
+
 import scala.jdk.CollectionConverters._
 
 object GetGameTradeData {
-  def getGameTradeData(playwright: Playwright, url: String) = {
+  def getGameTradeData(url: String, page: Page) = {
     val itemEleList = for {
-      categoryUrls <- getCategoryUrlList(playwright, url)
-      itemLists <- categoryUrls.traverse(categoryUrl => getItemEleList(playwright, categoryUrl))
+      categoryUrls <- getCategoryUrlList(url, page)
+      itemLists <- categoryUrls.traverse(categoryUrl => getItemEleList(categoryUrl, page))
     } yield itemLists.flatten
 
     itemEleList.flatMap { list =>
-      list.traverse { ele =>
+      list.filter(_.isVisible).traverse { ele =>
         for {
           title <- IO(ele.locator(".detail h3").innerHTML())
           imgSrc <- IO(ele.locator(".game-image img").getAttribute("src"))
@@ -27,18 +30,14 @@ object GetGameTradeData {
     }
   }
 
-  private def getItemEleList(playwright: Playwright, url: String) = for {
-    browser <- IO(playwright.chromium().launch())
-    page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
-    _ <- IO(page.navigate("https://gametrade.jp" + url))
-    itemsEle <- IO(page.locator("//ul[@class='exhibits clearfix']/li[@data-index]").all().asScala.toList)
-  } yield itemsEle
-
-  private def getCategoryUrlList(playwright: Playwright, url: String) = for {
-    browser <- IO(playwright.chromium().launch())
-    page <- IO(browser.newContext(new Browser.NewContextOptions().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0")).newPage())
+  private def getItemEleList(url: String, page: Page) = for {
     _ <- IO(page.navigate(url))
-    categoryUrlList <- IO(page.locator(".tabs a").all().asScala.map(_.getAttribute("href")).toList)
+    itemEle <- IO(page.locator("//ul[@class='exhibits clearfix']/li[@data-index]").all().asScala.toList)
+  } yield itemEle
+
+  private def getCategoryUrlList(url: String, page: Page) = for {
+    _ <- IO(page.navigate(url))
+    categoryUrlList <- IO(page.locator(".tabs a").all().asScala.map("https://gametrade.jp" + _.getAttribute("href")).toList)
   } yield categoryUrlList
 
   private def parseGameTitle(alt: String) = {
