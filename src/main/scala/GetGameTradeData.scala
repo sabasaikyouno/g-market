@@ -1,10 +1,7 @@
-import cats._
-import cats.data._
-import cats.syntax.all._
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, Page, Playwright}
+import cats.syntax.all._
+import com.microsoft.playwright.Page
 import models.GameTradeDT
-import io.circe.parser.decode
 
 import scala.jdk.CollectionConverters._
 
@@ -22,7 +19,7 @@ object GetGameTradeData {
           imgSrc <- IO(ele.locator(".game-image img").getAttribute("src"))
           gameTitle <- IO(parseGameTitle(ele.locator(".game-image img").getAttribute("alt")))
           detail <- IO(ele.locator(".detail .description p").innerHTML())
-          price <- IO(parsePrice(ele.locator(".detail .price .current_price p").innerHTML()))
+          price <- IO(parsePrice(ele.locator(".detail .price .current_price .amount").innerHTML()))
           url <- IO("https://gametrade.jp" + ele.locator(".exhibit-link").getAttribute("href"))
           category <- IO(parseCategory(ele.page().url()))
         } yield GameTradeDT(title,imgSrc, gameTitle, detail, price, url, category)
