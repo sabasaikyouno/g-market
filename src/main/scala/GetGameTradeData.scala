@@ -1,6 +1,6 @@
 import cats.effect.IO
 import cats.syntax.all._
-import com.microsoft.playwright.Page
+import com.microsoft.playwright.{Locator, Page}
 import models.GameTradeDT
 
 import scala.jdk.CollectionConverters._
@@ -16,7 +16,7 @@ object GetGameTradeData {
       list.filter(_.isVisible).traverse { ele =>
         for {
           title <- IO(ele.locator(".detail h3").innerHTML())
-          imgSrc <- IO(ele.locator(".game-image img").getAttribute("src"))
+          imgSrc <- IO(getImg(ele))
           gameTitle <- IO(parseGameTitle(ele.locator(".game-image img").getAttribute("alt")))
           detail <- IO(ele.locator(".detail .description p").innerHTML())
           price <- IO(parsePrice(ele.locator(".detail .price .current_price .amount").innerHTML()))
@@ -26,6 +26,14 @@ object GetGameTradeData {
       }
     }
   }
+
+  private def getImg(ele: Locator) =
+    ele.locator(".game-image img").getAttribute("src") match {
+      case "https://www.appelsiini.net/projects/lazyload/img/grey.gif" =>
+        ele.locator(".game-image img").getAttribute("data-original")
+      case imgSrc =>
+        imgSrc
+    }
 
   private def getItemEleList(url: String, page: Page) = for {
     _ <- IO(page.navigate(url))

@@ -1,8 +1,6 @@
-import cats._
-import cats.data._
-import cats.syntax.all._
 import cats.effect.IO
-import com.microsoft.playwright.{Browser, Page, Playwright}
+import cats.syntax.all._
+import com.microsoft.playwright.Page
 import models.RmtClubDT
 
 import scala.jdk.CollectionConverters._
